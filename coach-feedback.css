@@ -1,0 +1,19 @@
+.ai-coach-result{min-height:440px}
+.ai-coach-portrait{bottom:-38px;left:-30px;width:360px;height:475px}
+.ai-coach-portrait img{object-position:center 10%;transform:scale(1.32)}
+.ai-coach-result .score-placeholder{min-height:420px}
+.score-summary{align-items:flex-start;text-align:left}
+.ai-coach-result .score-summary strong,.ai-coach-result .score-summary span{align-self:flex-start;text-align:left}
+.ai-coach-result .score-summary,.ai-coach-result .local-ai-feedback{margin-left:32px;width:calc(100% - 32px)}
+.ai-coach-result .score-summary strong,.ai-coach-result .score-summary span{display:block;width:100%;text-align:left!important}
+.ai-coach-actions{padding:0 36px 24px}
+.stage-locked-note{color:#5578a4;font-size:14px;font-weight:700}
+.sequence-choice:disabled{cursor:default;opacity:1;transform:none}
+
+@media(max-width:850px){
+  .ai-coach-result{min-height:0}
+  .ai-coach-portrait{bottom:auto;left:auto;width:250px;height:320px}
+  .ai-coach-portrait img{object-position:center 14%;transform:scale(1.18)}
+  .ai-coach-result .score-summary,.ai-coach-result .local-ai-feedback{margin-left:0;width:100%}
+  .ai-coach-actions{padding:0 24px 24px}
+}

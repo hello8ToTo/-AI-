@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>关键操作与标准流程｜职境AI</title>
+  <link rel="stylesheet" href="style.css?v=20261028-1">
+<link rel="stylesheet" href="override.css?v=20261029-1">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <a class="brand" href="index.html"><span class="brand-mark"><img src="zhijing-ai-logo-white.png" alt="职境AI标识"></span><span><small>职境AI</small><strong>电梯维保岗前能力智训平台</strong></span></a>
+      <nav class="nav"><a href="index.html"><span class="num">00</span>实训首页</a><hr><a href="safety.html"><span class="num">01</span>安全意识与岗位规范</a><a class="active" href="operation.html"><span class="num">02</span>关键操作与标准流程</a><a href="tasks.html"><span class="num">03</span>岗位任务实训舱</a><hr><a href="ability-profile.html"><span class="num">◎</span>我的能力档案</a></nav>
+      <div class="side-foot"><b>智能操作教练在线</b>围绕核心技能，练习标准操作。</div>
+    </aside>
+    <main class="main">
+      <div class="topline"><div></div><div class="profile"><span>王明</span><i class="avatar">王</i></div></div>
+      <section class="training-head"><span class="pill">核心技能训练</span><h1>关键操作与标准流程</h1><p>围绕电梯维保核心技能，在典型任务中完成工具选择、操作顺序与关键部件检查。</p></section>
+      <section class="operation-hub" id="operationHub">
+        <section class="skill-selection" id="skillSelection">
+          <div class="operation-library-intro"><h2>请选择需考核的核心技能</h2><p>选择技能后进入典型任务，再按岗位流程完成案例学习与操作考核。</p></div>
+          <div class="skill-library" id="skillLibrary">
+            <article class="skill-card" data-skill="door" role="button" tabindex="0" aria-label="选择门系统检修与调整"><div class="skill-meta"><span class="skill-number">01</span><span class="skill-kind">高频维保技能</span></div><h3>门系统检修与调整</h3><p>门锁、门机与门区保护</p><svg class="skill-illustration" viewBox="0 0 120 100" aria-hidden="true"><rect x="38" y="8" width="44" height="82" rx="4"/><path d="M60 8v82M68 50h5M24 78h12M84 78h12"/></svg></article>
+            <article class="skill-card" data-skill="control" role="button" tabindex="0" aria-label="选择控制柜与电气回路检修"><div class="skill-meta"><span class="skill-number">02</span><span class="skill-kind">电气检修技能</span></div><h3>控制柜与电气回路检修</h3><p>断电验电、回路与故障信息</p><svg class="skill-illustration" viewBox="0 0 120 100" aria-hidden="true"><rect x="34" y="10" width="52" height="78" rx="4"/><path d="M46 28h28M46 42h28M48 62h8m8 0h8M62 70l-8 12h11l-5 10"/></svg></article>
+            <article class="skill-card" data-skill="traction" role="button" tabindex="0" aria-label="选择曳引与制动系统检查"><div class="skill-meta"><span class="skill-number">03</span><span class="skill-kind">机械检修技能</span></div><h3>曳引与制动系统检查</h3><p>曳引机、制动器与钢丝绳</p><svg class="skill-illustration" viewBox="0 0 120 100" aria-hidden="true"><circle cx="60" cy="50" r="29"/><circle cx="60" cy="50" r="9"/><path d="M60 21v18m0 22v18M31 50h18m22 0h18M39 29l13 13m16 16 13 13M81 29 68 42M52 58 39 71"/></svg></article>
+            <article class="skill-card" data-skill="mechanical" role="button" tabindex="0" aria-label="选择轿顶、底坑与机械部件检修"><div class="skill-meta"><span class="skill-number">04</span><span class="skill-kind">部件检修技能</span></div><h3>轿顶、底坑与机械部件检修</h3><p>轿顶、底坑与关键安全部件</p><svg class="skill-illustration" viewBox="0 0 120 100" aria-hidden="true"><path d="M32 10v80M88 10v80M32 20h56M42 28v52h36V28M60 28v52M22 90h76"/><path d="M46 14h28"/></svg></article>
+            <article class="skill-card" data-skill="escalator" role="button" tabindex="0" aria-label="选择自动扶梯维护与调整"><div class="skill-meta"><span class="skill-number">05</span><span class="skill-kind">专项维保技能</span></div><h3>自动扶梯维护与调整</h3><p>梯级、扶手带与保护装置</p><svg class="skill-illustration" viewBox="0 0 120 100" aria-hidden="true"><path d="M22 76h76L67 23H43L22 76Z"/><path d="M35 69h50M40 60h39M45 51h28M50 42h17"/><path d="M25 76h70"/></svg></article>
+          </div>
+        </section>
+        <section class="task-selection" id="taskSelection" hidden>
+          <button type="button" class="return-core" id="returnCore" onclick="document.getElementById('taskSelection').hidden=true;document.getElementById('skillSelection').hidden=false;window.scrollTo(0,0)">← 返回核心技能</button>
+          <div class="operation-library-intro"><span id="selectedSkillType">核心技能</span><h2 id="selectedSkillTitle">选择典型任务</h2><p>典型任务将依次引导你查看案例或微课、判断故障现象、选择工具、排序操作并完成关键部件检查。</p></div>
+          <div class="task-library" id="taskLibrary"></div>
+        </section>
+      </section>
+      <p class="footer-note">说明：本模块用于训练关键操作的标准流程与检查方法，不替代现场检修指导。具体操作标准由课程教师审核后配置。</p>
+    </main>
+  </div>
+  <script src="app.js?v=20261028-1"></script>
+  <script src="operation-library.js?v=20261029-4"></script>
+</body>
+</html>
