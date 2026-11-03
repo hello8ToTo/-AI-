@@ -15,7 +15,7 @@ const D=[
 ].map(x=>({id:x[0],code:x[1],title:x[2],tag:x[3],image:x[4],desc:x[5],checks:x[6],bad:x[7],safe:x[8],unsafe:x[9],records:x.slice(10)})).map(c=>({...c,values:VALUE_TAGS[c.id]}));
 window.safetyCaseValues=Object.fromEntries(D.map(c=>[c.title,c.values]));
 const $=id=>document.getElementById(id),ui={hub:$('safetyHub'),work:$('safetyWorkspace'),list:$('caseLibrary'),std:$('standardMode'),rnd:$('randomMode'),si:$('standardIntro'),ri:$('randomIntro'),label:$('safetyCaseLabel'),title:$('safetyCaseTitle'),prompt:$('safetyCasePrompt'),img:$('safetySceneImage'),scene:$('safetySceneTitle'),sceneText:$('safetySceneText'),tabs:$('caseTabs'),ops:$('safetyOptions'),submit:$('safetySubmit'),next:$('nextRandom'),result:$('safetyResult'),score:$('aiTotalScore'),scoreLabel:$('scoreLabel'),unit:$('scoreUnit'),coach:$('aiCoachTitle'),coachText:$('aiCoachPrompt'),diag:$('aiDiagnosticList')};
-let type='standard',item,index=0,answers=[],done=false,queue=[],qi=0,randomRecords=[];
+let type='standard',item,index=0,answers=[],done=false,queue=[],qi=0,randomRecords=[],randomReviewIndex=0;
 const safetyHistoryKey='ability-history:safety';
 const appendSafetyHistory=(total,stageScores)=>{let history=[];try{history=JSON.parse(localStorage.getItem(safetyHistoryKey)||'[]');}catch(error){}if(!Array.isArray(history))history=[];const attemptNo=(Number(history.at(-1)?.attemptNo)||0)+1;history=[...history,{attemptNo,completedAt:new Date().toISOString(),total,stageScores}].slice(-3);localStorage.setItem(safetyHistoryKey,JSON.stringify(history));};
 const stages=c=>[
@@ -38,6 +38,20 @@ const buildRandomQueue=()=>{
   const grouped=Object.fromEntries(capabilityNames.map(name=>[name,D.map(c=>({c,q:stages(c).find(q=>q.name===name)}))]));
   return shuffle(capabilityNames.flatMap(name=>shuffle(grouped[name]).slice(0,name===lowCountCapability?2:3)));
 };
+const renderRandomReview=()=>{
+  const record=randomRecords[randomReviewIndex];
+  if(!record)return;
+  ui.label.textContent=`随机案例 · 答题回看 ${randomReviewIndex+1}/${randomRecords.length}`;
+  ui.title.textContent=`${record.c.title}｜${record.q.name}`;
+  ui.prompt.textContent=record.q.prompt;
+  ui.img.src=record.c.image;ui.scene.textContent=record.q.cap;ui.sceneText.textContent=record.c.desc;
+  ui.tabs.innerHTML=randomRecords.map((item,index)=>`<button type="button" class="tab ${index===randomReviewIndex?'active':''} done" data-random-review="${index}">第 ${index+1} 题</button>`).join('');
+  ui.tabs.querySelectorAll('[data-random-review]').forEach(button=>button.onclick=()=>{randomReviewIndex=Number(button.dataset.randomReview);renderRandomReview()});
+  opts(record.q,record.v,true,true);
+  ui.submit.hidden=true;ui.next.hidden=true;
+  ui.result.className='result';
+  ui.result.textContent='';
+};
 const finishRandom=()=>{
   const correctCount=randomRecords.filter(record=>record.correct).length;
   const totalScore=Math.round(correctCount/queue.length*100);
@@ -46,21 +60,17 @@ const finishRandom=()=>{
     return {name,correct:records.filter(record=>record.correct).length,total:records.length};
   });
   const wrongRecords=randomRecords.filter(record=>!record.correct);
-  ui.label.textContent='随机案例 · 统一评分完成';
-  ui.title.textContent='8 题随机练习｜AI 智能安全督导复盘';
-  ui.prompt.textContent='已依据本次 8 道题的整体作答情况生成统一评分与复训建议。';
-  ui.tabs.innerHTML='';ui.ops.innerHTML='';ui.submit.hidden=true;ui.next.hidden=true;
+  randomReviewIndex=0;
   ui.scoreLabel.textContent='随机练习总得分';ui.unit.textContent='分';ui.score.textContent=totalScore;
-  ui.result.className=`result show ${wrongRecords.length?'warn':'good'}`;
-  ui.result.textContent=`本次共答对 ${correctCount}/${queue.length} 题。评分与点评在完成全部题目后统一生成。`;
   ui.coach.textContent=wrongRecords.length?'AI智能安全督导：已完成 8 题综合诊断':'AI智能安全督导：本次安全判断表现稳定';
   ui.coachText.textContent=wrongRecords.length?'请优先复训正确率最低的能力项，再回看对应案例中的安全确认逻辑。':'三类能力项均已覆盖，可继续挑战新的随机组合巩固判断稳定性。';
   ui.diag.hidden=false;
   const summaries=byCapability.map(item=>`【${item.name}】答对 ${item.correct}/${item.total} 题。`);
   const evidence=wrongRecords.slice(0,3).map(record=>`【${record.q.name}】“${record.c.title}”中存在误选或遗漏，请复盘该场景的必要安全确认。`);
   ui.diag.innerHTML=[...summaries,...(evidence.length?evidence:['本次 8 道题均判断正确。'])].map(text=>`<li>${text}</li>`).join('');
+  renderRandomReview();
 };
-const random=()=>{queue=buildRandomQueue();qi=0;randomRecords=[];type='random';ui.hub.hidden=true;ui.work.hidden=false;reset();ui.scoreLabel.textContent='随机练习进度';ui.unit.textContent='题';ui.score.textContent=`0/${queue.length}`;drawRandom();scrollTo(0,0)};
+const random=()=>{queue=buildRandomQueue();qi=0;randomRecords=[];randomReviewIndex=0;type='random';ui.hub.hidden=true;ui.work.hidden=false;reset();ui.scoreLabel.textContent='随机练习进度';ui.unit.textContent='题';ui.score.textContent=`0/${queue.length}`;drawRandom();scrollTo(0,0)};
 const drawRandom=()=>{let e=queue[qi];ui.label.textContent=`随机案例 · 第 ${qi+1}/${queue.length} 题`;ui.title.textContent=`${e.c.title}｜${e.q.name}`;ui.prompt.textContent=e.q.prompt;ui.img.src=e.c.image;ui.scene.textContent=e.q.cap;ui.sceneText.textContent=e.c.desc;ui.tabs.innerHTML='';opts(e.q);ui.submit.hidden=false;ui.submit.textContent=qi===queue.length-1?'提交第 8 题并生成 AI 评分':'提交本题，进入下一题';ui.next.hidden=true;ui.result.className='result';ui.coach.textContent='随机练习进行中：完成 8 题后统一评分';ui.coachText.textContent='本次将从风险识别、处置优先级、依据说明中各抽取 2–3 题；作答过程中不显示单题对错。';ui.diag.hidden=true;ui.diag.innerHTML=''};
 ui.submit.onclick=()=>{let v=vals();if(!v.length)return;if(type==='random'){const {c,q}=queue[qi],correct=v.length===q.ok.length&&q.ok.every(option=>v.includes(option));randomRecords.push({c,q,v,correct,wrong:v.filter(option=>!q.ok.includes(option)),missing:q.ok.filter(option=>!v.includes(option))});qi+=1;if(qi<queue.length){ui.score.textContent=`${qi}/${queue.length}`;drawRandom()}else finishRandom();return}answers[index]={v};if(index<2){index++;render()}else finish()};
 ui.next.onclick=()=>{};$('backLibrary').onclick=()=>{ui.work.hidden=true;ui.hub.hidden=false;showHub('choice')};ui.std.onclick=()=>showHub('standard');ui.rnd.onclick=()=>showHub('random');$('startRandom').onclick=random;cards();
