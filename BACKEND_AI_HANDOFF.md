@@ -29,7 +29,7 @@
 | 模块 | 训练完成节点 | 用户看到 AI 的位置 | 后端应调用的功能 | 是否影响分数 |
 | --- | --- | --- | --- | --- |
 | 01 安全意识与岗位规范 | 标准案例的第 3 题“依据说明”提交后 | 右侧“AI 智能安全督导”诊断区 | 错漏项解释、一个优先复训能力、3 条练习建议 | 否；分数由规则判定 |
-| 01 随机案例 | 第 8 题提交后 | 右侧“AI 智能安全督导”综合诊断区 | 汇总 8 题的三类能力项表现，生成一次总分、能力项分布和复训建议 | 否；随机练习可只记录练习次数 |
+| 01 随机案例 | 第 8 题提交后 | 右侧“AI 智能安全督导”综合诊断区；下方 8 题锁定回看区 | 汇总 8 题的三类能力项表现，生成一次总分、能力项分布、逐题答案回看和复训建议 | 否；随机练习可只记录练习次数 |
 | 02 关键操作与标准流程 | 第 4 个计分关卡“复核与记录”提交后 | 第 6 步“电梯维保教练 · AI 智能教练点评” | 结合四项得分、错漏步骤和记录摘要，生成技能复盘与复训建议 | 否；分数由规则判定 |
 | 03 岗位任务实训舱 | 第 5 关“工单闭环”提交后 | 第 6 关“电梯维保教练复盘” | 评价电话调度、病因判断、工具、处置顺序、闭环记录之间的逻辑关系 | 否；分数由规则判定 |
 | 我的能力档案 | 三个模块均至少完成一次后；或用户打开档案时 | 每个模块的“AI 学习建议”及顶部“AI 综合建议” | 分析最新成绩、近三次趋势和最低能力项，输出模块建议/综合建议 | 否；只读取已保存成绩 |
@@ -37,6 +37,8 @@
 前端当前所有“本地模拟 AI 点评”都是模型输出的预留展示位，接通后应由真实接口结果替换；接口失败时继续显示规则型兜底建议。
 
 随机案例的出题规则：每次固定为 8 题，从“风险识别、处置优先级、依据说明”三类题型中各随机抽取 2–3 题；即每次分布为 `3 + 3 + 2`，且哪一类抽 2 题随机轮换。作答期间不展示单题对错，不调用模型；仅第 8 题提交后，后端将这 8 题的作答事实一次性送入 AI 点评接口。
+
+第 8 题提交、服务端完成判分后，前端允许学生在“第 1 题”至“第 8 题”之间回看。回看规则必须由服务端结果驱动：所有选项锁定不可改；正确答案标绿；学生误选标红；未选干扰项灰显。答案和标准解析**不得在第 8 题提交前下发给浏览器**。
 
 ---
 
@@ -53,6 +55,16 @@
 | 依据说明 | 34 | 被选记录项、标准记录项、误选/遗漏 | 引导补全设备状态、防护措施、沟通/交接等可追溯信息 |
 
 判分建议：按正确项覆盖率计分，误选按规则扣分，单项最低为 0，总分封顶 100。题库、正确项和扣分参数应由教师/教研人员在后端配置，不写死在前端。
+
+#### 随机案例批量评分（100 分）
+
+随机案例不是 8 次独立 AI 调用，而是一次完整的批量训练尝试：
+
+- 8 题完成前，只保存作答进度；不可返回题目正确性、正确选项或 AI 点评；
+- 第 8 题提交后，后端一次性校验 8 道题、计算总分和三类能力项表现；
+- 建议总分算法为 `答对题数 / 8 × 100`，并同时返回三类题型的 `correctCount / questionCount`；
+- AI 仅调用 1 次，以三类能力项表现、错题事实和场景规则为依据输出综合反馈；
+- 完成后返回 8 题的 `questionReviews`，供锁定回看；该结果只读，不提供修改答案接口。
 
 ### 模块 02：关键操作与标准流程（100 分）
 
@@ -149,7 +161,75 @@
 
 返回三个模块各自最近 3 次正式成绩、每次的维度分、最新一次分数、三模块最新成绩的总平均分，以及已有的 AI 建议。第 4 次训练覆盖最早一条历史记录。
 
-### 4.3 生成/刷新综合建议
+### 4.3 随机案例：创建题组会话与批量提交
+
+推荐将随机出题与提交分开，防止前端获得题库答案或通过篡改题目结构作弊。
+
+`POST /api/v1/training-sessions`
+
+请求：
+
+```json
+{
+  "moduleCode": "SAFETY",
+  "trainingMode": "random",
+  "scenarioRuleVersion": "2026-11-03"
+}
+```
+
+后端创建一个短期有效的 `sessionId`，按 `3 + 3 + 2` 规则抽出 8 题，返回题干、选项和题型标签；**不返回正确选项、扣分规则或标准解析**。
+
+`POST /api/v1/training-attempts/random-batch`
+
+第 8 题完成时一次提交：
+
+```json
+{
+  "requestId": "uuid，用于幂等",
+  "sessionId": "random_session_xxx",
+  "moduleCode": "SAFETY",
+  "trainingMode": "random",
+  "answers": [
+    { "questionId": "safety_machine_evidence", "selectedOptionIds": ["record_check", "record_handover"] },
+    { "questionId": "safety_pit_risk", "selectedOptionIds": ["ladder", "pit_stop", "car_position"] }
+  ]
+}
+```
+
+后端校验：`sessionId` 属于当前学员、未过期、恰好 8 题、每题只提交一次、题型分布为 `3 + 3 + 2`。正式评分完成后才返回：
+
+```json
+{
+  "attemptId": "att_xxx",
+  "scoring": {
+    "totalScore": 75,
+    "dimensions": [
+      { "code": "risk_identification", "name": "风险识别", "correctCount": 3, "questionCount": 3 },
+      { "code": "disposal_priority", "name": "处置优先级", "correctCount": 2, "questionCount": 3 },
+      { "code": "evidence_recording", "name": "依据说明", "correctCount": 1, "questionCount": 2 }
+    ]
+  },
+  "questionReviews": [
+    {
+      "questionNo": 1,
+      "questionId": "safety_machine_evidence",
+      "selectedOptionIds": ["record_check", "record_handover"],
+      "correctOptionIds": ["record_check", "record_handover", "record_power_restore"],
+      "optionStates": [
+        { "optionId": "record_check", "state": "correct" },
+        { "optionId": "record_handover", "state": "correct" },
+        { "optionId": "record_power_restore", "state": "correct" },
+        { "optionId": "only_no_abnormal", "state": "neutral" }
+      ]
+    }
+  ],
+  "aiFeedback": { "status": "ready", "diagnosis": "...", "priority": { "dimensionCode": "evidence_recording", "name": "依据说明" }, "reason": "...", "nextActions": ["...", "...", "..."], "encouragement": "..." }
+}
+```
+
+前端根据 `optionStates` 展示：`correct` 为绿色、`wrong` 为红色、`neutral` 为灰色。即使正确项未被学生选择，也应显示 `correct`，方便复盘；学生已选但不正确的项标为 `wrong`。
+
+### 4.4 生成/刷新综合建议
 
 `POST /api/v1/ai/overall-advice`
 
@@ -170,8 +250,9 @@
 4. 输出中文、专业、克制、鼓励式表达；避免恐吓、贬低或过度承诺。
 5. 不输出 HTML、Markdown 链接、代码、医疗/法律建议、真实个人信息，也不复述 API Key。
 6. 对困人、门锁、救援相关内容，只能提示“按单位应急预案和现场规程执行”；不得给出绕过安全回路、强行开门、短接、带电操作等可执行危险步骤。
-7. nextActions 固定 3 条，每条不超过 35 个汉字，应是可在训练平台完成的复训动作。
-8. 严格只输出与约定 JSON Schema 一致的 JSON，不添加额外字段。
+7. 随机案例的反馈必须基于 8 题汇总事实，不得逐题虚构作答内容；如需举例，只能引用输入中的 `questionReviews`。
+8. nextActions 固定 3 条，每条不超过 35 个汉字，应是可在训练平台完成的复训动作。
+9. 严格只输出与约定 JSON Schema 一致的 JSON，不添加额外字段。
 ```
 
 模型输入中还应附带本次题库的 `scenarioRules`（仅包含允许解释的标准知识点和禁止事项），避免模型依赖自身不确定的行业记忆自由发挥。
@@ -185,6 +266,7 @@
 - `moduleCode`、`scenarioId`、场景名称、练习次数；
 - 规则引擎计算的总分、各能力项得分/满分；
 - `missedPointIds`、`wrongOptionIds` 对应的脱敏题库说明；
+- 随机案例完成后可发送 8 题的题型统计、错题事实和脱敏的 `questionReviews`；
 - 最近三次分数及趋势；
 - 后端配置的场景规则、允许教学目标和禁用行为。
 
@@ -220,6 +302,7 @@
 | `training_attempt` | attempt_id、learner_id、module_code、scenario_id、attempt_no、completed_at、total_score、status | 一次训练的正式成绩记录 |
 | `training_dimension_score` | attempt_id、dimension_code、score、max_score、missed_point_ids、wrong_option_ids | 支撑能力档案、趋势、AI 证据 |
 | `ai_feedback` | attempt_id、prompt_version、model_name、status、response_json、fallback_used、created_at | 追溯 AI 返回、便于模型/提示词版本迭代 |
+| `training_session` | session_id、learner_id、module_code、training_mode、question_ids、expires_at、consumed_at | 保存随机题组及其有效期，确保题目与判分在服务端闭环 |
 
 “仅保留近三次”的展示逻辑可以由查询层截取；正式库建议保留全量审计记录，不要物理删除较早的训练数据。
 
@@ -245,11 +328,14 @@
 4. AI 结果只能包含约定字段，`nextActions` 恰为 3 条，且不含 HTML/脚本/危险操作指令。
 5. 完成第 4 次训练后，能力档案展示最新 3 次；数据库仍可追溯全部历史。
 6. 三模块都完成后，总平均分等于三模块“最近一次正式成绩”的算术平均；未完成时不伪造平均分。
+7. 随机案例开始后，后端发出的 8 题题型分布必须为 `3 + 3 + 2`，且每类题量在 2–3 之间。
+8. 第 8 题提交前，任何接口均不得返回 `correctOptionIds`、标准解析或 AI 点评。
+9. 批量提交成功后，只读回看接口/返回体应能还原 8 题：正确项为绿色、误选为红色、其余为灰色；再次提交或修改答案必须被拒绝。
 
 ---
 
 ## 9. 前端改造的最小范围
 
-程序员只需将当前三个“完成训练”的落点改为调用 `POST /api/v1/training/attempts`，并以接口返回的 `scoring`、`history`、`aiFeedback` 渲染成绩和点评；能力档案改为请求 `GET /api/v1/ability-profile`。
+程序员应将标准案例、关键操作、岗位任务三个“完成训练”落点改为调用 `POST /api/v1/training/attempts`；将随机案例改为“创建题组会话 → 8 题一次性批量提交 → 回看只读结果”的流程，并以接口返回的 `scoring`、`questionReviews`、`history`、`aiFeedback` 渲染成绩、回看与点评；能力档案改为请求 `GET /api/v1/ability-profile`。
 
 在真实接口稳定前，可保留当前本地规则与 `localStorage` 作为开发环境兜底；生产环境应以数据库的正式成绩为准。
