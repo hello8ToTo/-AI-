@@ -31,7 +31,7 @@
 | 01 安全意识与岗位规范 | 标准案例的第 3 题“依据说明”提交后 | 右侧“AI 智能安全督导”诊断区 | 错漏项解释、一个优先复训能力、3 条练习建议 | 否；分数由规则判定 |
 | 01 随机案例 | 第 8 题提交后 | 右侧“AI 智能安全督导”综合诊断区；下方 8 题锁定回看区 | 汇总 8 题的三类能力项表现，生成一次总分、能力项分布、逐题答案回看和复训建议 | 否；随机练习可只记录练习次数 |
 | 02 关键操作与标准流程 | 第 4 个计分关卡“复核与记录”提交后 | 第 6 步“电梯维保教练 · AI 智能教练点评” | 结合四项得分、错漏步骤和记录摘要，生成技能复盘与复训建议 | 否；分数由规则判定 |
-| 03 岗位任务实训舱 | 第 5 关“工单闭环”提交后 | 第 6 关“电梯维保教练复盘” | 评价电话调度、病因判断、工具、处置顺序、闭环记录之间的逻辑关系 | 否；分数由规则判定 |
+| 03 岗位任务实训舱 | 第 5 关“工单闭环”提交后 | 第 6 关“电梯维保教练复盘” | 评价工单受理、电话调度、病因判断、工具、处置顺序、闭环记录之间的逻辑关系 | 否；分数由规则判定 |
 | 我的能力档案 | 三个模块均至少完成一次后；或用户打开档案时 | 每个模块的“AI 学习建议”及顶部“AI 综合建议” | 分析最新成绩、近三次趋势和最低能力项，输出模块建议/综合建议 | 否；只读取已保存成绩 |
 
 前端当前所有“本地模拟 AI 点评”都是模型输出的预留展示位，接通后应由真实接口结果替换；接口失败时继续显示规则型兜底建议。
@@ -85,13 +85,13 @@
 
 | 环节 / 能力项 | 满分 | 后端判分所需事实 | AI 的教学任务 |
 | --- | ---: | --- | --- |
-| 远程沟通（电话调度） | 20 | 已选信息项、标准项、误选/漏选 | 强化被困人数/状态、轿厢位置、现场联系人、已知异常的核实优先级 |
+| 工单受理与电话调度（能力档案归入“远程沟通”） | 20 | 工单时间、场所/设备标识、困人数量与状态、轿厢位置、物业现场联系人、已知异常；以及已选信息项、标准项、误选/漏选 | 先核实工单基本事实和风险等级，再强化被困人数/状态、轿厢位置、现场联系人、已知异常的核实优先级；不得跳过受理信息就组织处置 |
 | 到场决策：病因判断 | 20 | 所选病因、线索 ID、标准病因 | 基于已给线索解释门锁回路判断逻辑；不得把 AI 推测当作真实故障结论 |
 | 应急协同（工具准备） | 15 | 已选工具、标准工具集、误选/漏选 | 解释万用表、绝缘螺丝刀、塞尺等工具与检查动作的关系 |
 | 到场决策：处置顺序 | 20 | 用户点击的顺序、正确顺序、危险干扰项是否被选择 | 解释安全确认、检查、调整、复核的因果关系，重点提示禁止未确认即短接/试运行 |
 | 工单闭环 | 25 | 闭环勾选项、记录摘要、标准项、交接信息是否完整 | 输出交接/复核遗漏点；禁止生成“已可恢复运行”等擅自放行结论 |
 
-当前能力档案的聚合方式：远程沟通 20 分、应急协同 15 分、到场决策 40 分（病因判断 + 处置顺序）、工单闭环 25 分。
+当前能力档案的聚合方式：远程沟通 20 分（工单受理与电话调度）、应急协同 15 分、到场决策 40 分（病因判断 + 处置顺序）、工单闭环 25 分。
 
 ---
 
@@ -114,7 +114,12 @@
   "attemptNo": 2,
   "completedAt": "2026-11-03T10:30:00+08:00",
   "answers": {
-    "remoteCommunication": { "selectedOptionIds": ["people_status", "property_contact", "reported_time"] },
+    "workOrderAcceptance": {
+      "reportTime": "夜间 21:40",
+      "siteCode": "residential_community_building_2_lift_1",
+      "incidentType": "passenger_entrapment",
+      "selectedOptionIds": ["people_status", "cabin_position", "property_contact", "reported_time", "known_abnormal"]
+    },
     "causeDiagnosis": { "selectedOptionId": "door_lock_circuit_abnormal" },
     "toolPreparation": { "selectedOptionIds": ["multimeter", "insulated_screwdriver", "feeler_gauge"] },
     "disposalSequence": { "selectedStepIds": ["safety_confirm", "check", "adjust", "recheck"] },
@@ -135,7 +140,7 @@
   "scoring": {
     "totalScore": 82,
     "dimensions": [
-      { "code": "remote_communication", "name": "远程沟通", "score": 18, "maxScore": 20, "missedPointIds": ["cabin_position"], "wrongOptionIds": [] },
+      { "code": "workorder_acceptance_and_remote_communication", "name": "工单受理与电话调度", "score": 18, "maxScore": 20, "missedPointIds": ["cabin_position"], "wrongOptionIds": [] },
       { "code": "emergency_coordination", "name": "应急协同", "score": 15, "maxScore": 15, "missedPointIds": [], "wrongOptionIds": [] },
       { "code": "on_site_decision", "name": "到场决策", "score": 29, "maxScore": 40, "missedPointIds": ["safety_confirm"], "wrongOptionIds": ["short_circuit_before_confirmation"] },
       { "code": "workorder_closure", "name": "工单闭环", "score": 20, "maxScore": 25, "missedPointIds": ["handover"], "wrongOptionIds": [] }
@@ -144,10 +149,10 @@
   "history": { "recentScores": [72, 78, 82], "trend": "up" },
   "aiFeedback": {
     "status": "ready",
-    "diagnosis": "电话核实和工具准备较完整，但到场处置前仍需先完成安全确认。",
+    "diagnosis": "工单受理信息和工具准备较完整，但到场处置前仍需先完成安全确认。",
     "priority": { "dimensionCode": "on_site_decision", "name": "到场决策" },
     "reason": "处置顺序中出现了跳过安全确认的选择。",
-    "nextActions": ["复训安全确认步骤", "再次完成门锁回路处置排序", "补全复核和物业交接记录"],
+    "nextActions": ["复训工单受理中的轿厢位置核实", "再次完成门锁回路处置排序", "补全复核和物业交接记录"],
     "encouragement": "保持先确认安全边界、再推进处置的习惯。"
   }
 }
@@ -250,9 +255,10 @@
 4. 输出中文、专业、克制、鼓励式表达；避免恐吓、贬低或过度承诺。
 5. 不输出 HTML、Markdown 链接、代码、医疗/法律建议、真实个人信息，也不复述 API Key。
 6. 对困人、门锁、救援相关内容，只能提示“按单位应急预案和现场规程执行”；不得给出绕过安全回路、强行开门、短接、带电操作等可执行危险步骤。
-7. 随机案例的反馈必须基于 8 题汇总事实，不得逐题虚构作答内容；如需举例，只能引用输入中的 `questionReviews`。
-8. nextActions 固定 3 条，每条不超过 35 个汉字，应是可在训练平台完成的复训动作。
-9. 严格只输出与约定 JSON Schema 一致的 JSON，不添加额外字段。
+7. 对“工单受理与电话调度”，先说明信息核实是否完整，再讨论后续协同；不得将未核实的轿厢位置、人员状态或故障原因表述为既定事实。
+8. 随机案例的反馈必须基于 8 题汇总事实，不得逐题虚构作答内容；如需举例，只能引用输入中的 `questionReviews`。
+9. nextActions 固定 3 条，每条不超过 35 个汉字，应是可在训练平台完成的复训动作。
+10. 严格只输出与约定 JSON Schema 一致的 JSON，不添加额外字段。
 ```
 
 模型输入中还应附带本次题库的 `scenarioRules`（仅包含允许解释的标准知识点和禁止事项），避免模型依赖自身不确定的行业记忆自由发挥。
@@ -264,6 +270,7 @@
 ### 允许发送给模型的数据
 
 - `moduleCode`、`scenarioId`、场景名称、练习次数；
+- 工单受理所需的脱敏字段：事件类型、工单时间、内部场所/设备编码、人员状态、轿厢位置、现场联系人是否已确认、已知异常；
 - 规则引擎计算的总分、各能力项得分/满分；
 - `missedPointIds`、`wrongOptionIds` 对应的脱敏题库说明；
 - 随机案例完成后可发送 8 题的题型统计、错题事实和脱敏的 `questionReviews`；
